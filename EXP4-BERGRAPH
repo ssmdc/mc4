@@ -1,0 +1,69 @@
+CODE:GRAPH1
+clc;
+clear;
+close all;
+N = 10^6; % number of bits
+% Initialize random generators (modern MATLAB way)
+rng(100);
+% Transmitter
+ip = rand(1, N) > 0.5;    % Generate 0s and 1s
+s = 2*ip - 1;             % BPSK: 0 -> -1, 1 -> +1
+% Noise
+n = (1/sqrt(2)) * (randn(1, N) + 1j*randn(1, N)); % complex Gaussian noise
+Eb_N0_dB = -3:10; % Eb/N0 range
+for ii = 1:length(Eb_N0_dB)
+    % Add noise
+    y = s + 10^(-Eb_N0_dB(ii)/20) * n;
+    % Receiver (decision)
+    ipHat = real(y) > 0;
+    % Count errors
+    nErr(ii) = sum(ip ~= ipHat);
+end
+% BER
+simBer = nErr / N;
+theoryBer = 0.5 * erfc(sqrt(10.^(Eb_N0_dB/10)));
+% Plot
+figure;
+semilogy(Eb_N0_dB, theoryBer, 'b.-', 'LineWidth', 1.5);
+hold on;
+semilogy(Eb_N0_dB, simBer, 'mx-', 'LineWidth', 1.5);
+axis([-3 10 1e-5 0.5]);
+grid on;
+legend('Theory', 'Simulation');
+xlabel('Eb/N0 (dB)');
+ylabel('Bit Error Rate (BER)');
+title('BPSK Bit Error Rate over AWGN Channel');
+
+
+
+CODE:GRAPH2
+clear; clc; close all;
+EbNo_dB = 0:1:35;
+EbNo    = 10.^(EbNo_dB/10);
+BER_awgn = 0.5 * erfc(sqrt(EbNo));
+BER_rayleigh_theory = 0.5 * (1 - sqrt(EbNo ./ (1 + EbNo)));
+N = 1e6;
+BER_rayleigh_sim = zeros(1, length(EbNo_dB));
+
+for k = 1:length(EbNo_dB)
+    snr_linear = EbNo(k);
+    bits   = 2*(randi([0 1], 1, N) > 0.5) - 1;
+    h      = sqrt(randn(1,N).^2 + randn(1,N).^2) / sqrt(2);
+    noise  = (1/sqrt(2*snr_linear)) * randn(1, N);
+    received = h .* bits + noise;
+    detected = sign(received);
+    BER_rayleigh_sim(k) = sum(detected ~= bits) / N;
+end
+
+figure;
+semilogy(EbNo_dB, BER_awgn,            'b-+', 'LineWidth', 1.5); hold on;
+semilogy(EbNo_dB, BER_rayleigh_theory, 'r-s', 'LineWidth', 1.5);
+semilogy(EbNo_dB, BER_rayleigh_sim,    'g-x', 'LineWidth', 1.5);
+
+grid on;
+xlabel('Eb/No, dB');
+ylabel('Bit Error Rate');
+title('BER for BPSK modulation in Rayleigh channel');
+legend('AWGN-Theory', 'Rayleigh-Theory', 'Rayleigh-Simulation', 'Location', 'southwest');
+ylim([1e-5, 1]);
+xlim([0, 35]);
