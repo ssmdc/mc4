@@ -1,0 +1,41 @@
+CODE:CLIENT
+import socket
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_address = ('localhost', 10000)
+client.connect(server_address)
+# Receive file name
+file_name = client.recv(1000).decode()
+# Create new file name
+file_name = "hello_" + file_name
+# Open file to write
+file = open(file_name, "wb")
+# Receive data
+data = client.recv(4096)
+# Write data
+file.write(data)
+file.close()
+client.close()
+print("File received successfully!")
+
+
+
+CODE:SERVER
+import socket
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_address = ('localhost', 10000)
+server.bind(server_address)
+server.listen(1)
+print("Server is waiting for connection...")
+connection, client_address = server.accept()
+print("Client connected!")
+file_name = "Text.txt"
+# Send file name
+connection.sendall(file_name.encode())
+# Open and send file
+file = open(file_name, "rb")
+data = file.read()
+connection.sendall(data)
+file.close()
+connection.close()
+server.close()
+print("File sent successfully!")
