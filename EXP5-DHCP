@@ -25,4 +25,7 @@ dns-server 8.8.8.8
 exit
 exit
 sh run | sec dhcp
-	
+
+
+ping 192.168.2.2 //pc0
+ping 192.168.1.2 //laptop0
